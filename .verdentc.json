@@ -1,0 +1,7 @@
+{
+  "deploy": {
+    "type": "fullstack",
+    "rootDir": "proofloop-demo",
+    "appPort": 8080
+  }
+}
