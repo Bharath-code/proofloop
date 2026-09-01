@@ -4,6 +4,7 @@ import path from 'node:path';
 import dns from 'node:dns/promises';
 import net from 'node:net';
 import { fileURLToPath } from 'node:url';
+import { db } from './db.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const DIST = path.join(__dirname, '..', 'dist');
@@ -283,19 +284,32 @@ app.post('/api/leads', (req, res) => {
     return res.status(400).json({ ok: false });
   }
   leadsLock = leadsLock.then(async () => {
-    try {
-      await fsp.mkdir(DATA, { recursive: true });
-      const file = path.join(DATA, 'leads.json');
-      let leads = [];
+    let saved = false;
+    if (db) {
       try {
-        leads = JSON.parse(await fsp.readFile(file, 'utf8'));
+        // Plain insert: the gateway rejects anon upserts, so duplicates are
+        // detected via the unique constraint (23505 = already subscribed).
+        const { error } = await db.from('leads').insert({ email });
+        if (!error || error.code === '23505') saved = true;
       } catch {
-        /* first write or unreadable file → start fresh */
+        /* fall through to file persistence */
       }
-      if (!leads.includes(email)) leads.push(email);
-      await fsp.writeFile(file, JSON.stringify(leads, null, 2));
-    } catch {
-      /* demo persistence is best-effort */
+    }
+    if (!saved) {
+      try {
+        await fsp.mkdir(DATA, { recursive: true });
+        const file = path.join(DATA, 'leads.json');
+        let leads = [];
+        try {
+          leads = JSON.parse(await fsp.readFile(file, 'utf8'));
+        } catch {
+          /* first write or unreadable file → start fresh */
+        }
+        if (!leads.includes(email)) leads.push(email);
+        await fsp.writeFile(file, JSON.stringify(leads, null, 2));
+      } catch {
+        /* demo persistence is best-effort */
+      }
     }
     res.json({ ok: true });
   });
@@ -306,35 +320,50 @@ app.post('/api/leads', (req, res) => {
 let auditsLock = Promise.resolve();
 
 app.post('/api/audits', (req, res) => {
-  const { email, agency, client } = req.body || {};
+  const { email, agency: agencyRaw, client: clientRaw } = req.body || {};
   if (
     typeof email !== 'string' ||
     !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) ||
     email.length > 254 ||
-    typeof agency !== 'string' ||
-    !agency.trim() ||
-    agency.length > 2048 ||
-    typeof client !== 'string' ||
-    !client.trim() ||
-    client.length > 2048
+    typeof agencyRaw !== 'string' ||
+    !agencyRaw.trim() ||
+    agencyRaw.length > 2048 ||
+    typeof clientRaw !== 'string' ||
+    !clientRaw.trim() ||
+    clientRaw.length > 2048
   ) {
     return res.status(400).json({ ok: false });
   }
 
   auditsLock = auditsLock.then(async () => {
-    try {
-      await fsp.mkdir(DATA, { recursive: true });
-      const file = path.join(DATA, 'audits.json');
-      let audits = [];
+    const agency = agencyRaw.trim();
+    const client = clientRaw.trim();
+    let saved = false;
+    if (db) {
       try {
-        audits = JSON.parse(await fsp.readFile(file, 'utf8'));
+        const { error } = await db
+          .from('audit_requests')
+          .insert({ email, agency_website: agency, client_website: client });
+        if (!error) saved = true;
       } catch {
-        /* first write or unreadable file → start fresh */
+        /* fall through to file persistence */
       }
-      audits.push({ email, agency: agency.trim(), client: client.trim(), createdAt: new Date().toISOString() });
-      await fsp.writeFile(file, JSON.stringify(audits, null, 2));
-    } catch {
-      /* demo persistence is best-effort */
+    }
+    if (!saved) {
+      try {
+        await fsp.mkdir(DATA, { recursive: true });
+        const file = path.join(DATA, 'audits.json');
+        let audits = [];
+        try {
+          audits = JSON.parse(await fsp.readFile(file, 'utf8'));
+        } catch {
+          /* first write or unreadable file → start fresh */
+        }
+        audits.push({ email, agency, client, createdAt: new Date().toISOString() });
+        await fsp.writeFile(file, JSON.stringify(audits, null, 2));
+      } catch {
+        /* demo persistence is best-effort */
+      }
     }
     res.json({ ok: true });
   });
