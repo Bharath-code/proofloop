@@ -230,8 +230,7 @@ export default function App() {
             <span className="hero-em">Put it to work.</span>
           </h1>
           <p className="sub">
-            ProofLoop turns scattered client reviews into branded proof you can search, ship
-            anywhere, and bill into the retainer.
+            Turn client proof into work your agency can deliver and bill for.
           </p>
           <div className="input-row">
             <input
