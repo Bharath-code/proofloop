@@ -13,6 +13,12 @@ const DATA = path.join(__dirname, '..', 'data');
 const app = express();
 app.use(express.json({ limit: '32kb' }));
 
+// Express 4 does not catch async handler rejections; an unhandled rejection
+// terminates the process. Log instead of crash-looping the deployment.
+process.on('unhandledRejection', (err) => {
+  console.error('[server] unhandled rejection:', err);
+});
+
 const HEX = /^#[0-9a-f]{6}$/i;
 const UA =
   'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126 Safari/537.36';
@@ -385,8 +391,16 @@ async function readStore(file, fallback) {
 }
 
 async function writeStore(file, data) {
-  await fsp.mkdir(DATA, { recursive: true });
-  await fsp.writeFile(path.join(DATA, file), JSON.stringify(data, null, 2));
+  // Best-effort: in hosted runtimes the filesystem may be read-only or the
+  // data dir may be missing. Persistence then relies on Supabase; never let
+  // an fs failure reject into an Express 4 async handler (that would crash
+  // the process).
+  try {
+    await fsp.mkdir(DATA, { recursive: true });
+    await fsp.writeFile(path.join(DATA, file), JSON.stringify(data, null, 2));
+  } catch (err) {
+    console.error('[store] write failed (continuing without file persistence):', err?.message ?? err);
+  }
 }
 
 function slugifyServer(name) {
