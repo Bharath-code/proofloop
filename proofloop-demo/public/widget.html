@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>ProofLoop widget</title>
+<style>
+  :root { --accent: #e8963c; }
+  * { box-sizing: border-box; margin: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    background: #fff;
+    color: #17181c;
+    padding: 16px;
+  }
+  body.embed { background: transparent; padding: 0; }
+  .head { display: flex; align-items: center; gap: 12px; padding: 4px 4px 16px; }
+  .logo {
+    width: 40px; height: 40px; border-radius: 10px; flex: none;
+    object-fit: cover; background: var(--accent); color: #fff;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 700; font-size: 15px; overflow: hidden;
+  }
+  .head-title { font-weight: 700; font-size: 15px; line-height: 1.2; }
+  .head-sub { font-size: 12.5px; color: #6b6f76; margin-top: 2px; }
+  .head-sub .stars { color: var(--accent); letter-spacing: 1px; }
+  .powered {
+    margin-left: auto; font-size: 11px; color: #9aa0a8;
+    text-decoration: none; white-space: nowrap;
+  }
+  .powered:hover { color: var(--accent); }
+  .wall { columns: 2 220px; column-gap: 12px; }
+  .quote {
+    break-inside: avoid; margin: 0 0 12px;
+    border: 1px solid #ececee; border-radius: 12px; padding: 14px 16px;
+    background: #fff; box-shadow: 0 1px 2px rgba(0,0,0,.04);
+  }
+  .quote-stars { color: var(--accent); font-size: 12px; letter-spacing: 1.5px; margin-bottom: 8px; }
+  .quote-stars .empty { color: #dcdde1; }
+  .quote blockquote { font-size: 13.5px; line-height: 1.55; color: #2c2e33; }
+  figcaption { display: flex; align-items: center; gap: 8px; margin-top: 12px; }
+  .avatar {
+    width: 26px; height: 26px; border-radius: 50%; flex: none;
+    background: var(--accent); color: #fff; font-size: 10px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center; opacity: .85;
+  }
+  .who strong { display: block; font-size: 12px; }
+  .who em { font-style: normal; font-size: 11px; color: #8b9097; }
+  .empty-msg { padding: 24px 4px; color: #6b6f76; font-size: 13.5px; }
+  .error-msg { padding: 32px 8px; text-align: center; color: #6b6f76; font-size: 13.5px; }
+</style>
+</head>
+<body>
+<div id="root"><div class="error-msg">Loading…</div></div>
+<script>
+(function () {
+  var slugMatch = location.pathname.match(/\/w\/([^/?#]+)/);
+  var slug = slugMatch ? decodeURIComponent(slugMatch[1]) : '';
+  var embedded = new URLSearchParams(location.search).get('embed') === '1' || window.self !== window.top;
+  if (embedded) document.body.classList.add('embed');
+
+  function initials(name) {
+    return (name || '').trim().split(/\s+/).slice(0, 2).map(function (p) { return (p[0] || '').toUpperCase(); }).join('') || '·';
+  }
+  function esc(s) {
+    var d = document.createElement('div');
+    d.textContent = s == null ? '' : String(s);
+    return d.innerHTML;
+  }
+  function stars(n) {
+    var out = '';
+    for (var i = 1; i <= 5; i++) out += i <= n ? '★' : '<span class="empty">★</span>';
+    return out;
+  }
+
+  function reportHeight() {
+    if (!embedded) return;
+    parent.postMessage({ type: 'proofloop:height', height: document.documentElement.scrollHeight, slug: slug }, '*');
+  }
+
+  fetch('/api/workspaces/' + encodeURIComponent(slug))
+    .then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); })
+    .then(function (data) {
+      var ws = data.workspace || {};
+      var reviews = data.reviews || [];
+      if (ws.accent && /^#[0-9a-f]{6}$/i.test(ws.accent)) {
+        document.documentElement.style.setProperty('--accent', ws.accent);
+      }
+      var html = '<div class="head">'
+        + (ws.logo_url
+          ? '<img class="logo" src="' + esc(ws.logo_url) + '" alt="" onerror="this.outerHTML=\'<div class=logo>' + esc(initials(ws.name)) + '</div>\'">'
+          : '<div class="logo">' + esc(initials(ws.name)) + '</div>')
+        + '<div><div class="head-title">' + esc(ws.name) + '</div>'
+        + '<div class="head-sub"><span class="stars">★★★★★</span> ' + (reviews.length || '') + ' reviews · Wall of Love</div></div>'
+        + '<a class="powered" href="https://proofloop.app" target="_blank" rel="noopener">Powered by ProofLoop</a></div>';
+      if (!reviews.length) {
+        html += '<div class="empty-msg">No published reviews yet.</div>';
+      } else {
+        html += '<div class="wall">' + reviews.map(function (r) {
+          return '<figure class="quote">'
+            + '<div class="quote-stars">' + stars(r.rating) + '</div>'
+            + '<blockquote>' + esc(r.text) + '</blockquote>'
+            + '<figcaption><span class="avatar">' + esc(initials(r.author)) + '</span>'
+            + '<span class="who"><strong>' + esc(r.author) + '</strong>'
+            + '<em>' + esc([r.role, r.when_label].filter(Boolean).join(' · ')) + '</em></span></figcaption>'
+            + '</figure>';
+        }).join('') + '</div>';
+      }
+      document.getElementById('root').innerHTML = html;
+      reportHeight();
+      if ('ResizeObserver' in window) {
+        new ResizeObserver(reportHeight).observe(document.body);
+      } else {
+        window.addEventListener('resize', reportHeight);
+      }
+    })
+    .catch(function () {
+      document.getElementById('root').innerHTML = '<div class="error-msg">This ProofLoop widget could not be loaded.</div>';
+      reportHeight();
+    });
+})();
+</script>
+</body>
+</html>

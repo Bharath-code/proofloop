@@ -71,6 +71,11 @@ async function fetchBrand(url: string): Promise<Partial<Brand>> {
 }
 
 export default function App() {
+  if (window.location.pathname.startsWith('/admin')) return <AdminApp />;
+  return <Landing />;
+}
+
+function Landing() {
   const [input, setInput] = useState('');
   const [flow, setFlow] = useState<Flow>('idle');
   const [stage, setStage] = useState(0);
@@ -84,6 +89,7 @@ export default function App() {
   const [auditClient, setAuditClient] = useState('');
   const [auditEmail, setAuditEmail] = useState('');
   const [auditSubmitted, setAuditSubmitted] = useState(false);
+  const [demoSlug, setDemoSlug] = useState<string | null>(null);
   const resultRef = useRef<HTMLDivElement>(null);
   const busyRef = useRef(false);
 
@@ -134,6 +140,11 @@ export default function App() {
       });
       setElapsed(((performance.now() - t0) / 1000).toFixed(1) + 's');
       setFlow('done');
+      void createDemoWorkspace({
+        name: resolvedName,
+        accent,
+        logoUrl: b.logoUrl ?? null,
+      });
       setTimeout(
         () => resultRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }),
         60,
@@ -152,13 +163,35 @@ export default function App() {
     }
   }
 
+  async function createDemoWorkspace(payload: {
+    name: string;
+    accent: string;
+    logoUrl: string | null;
+  }) {
+    try {
+      const res = await fetch('/api/demo-workspace', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...payload, reviews: SAMPLE_REVIEWS }),
+      });
+      if (!res.ok) return;
+      const data = await res.json();
+      if (data?.slug) setDemoSlug(data.slug);
+    } catch {
+      /* the demo result still renders without a live workspace */
+    }
+  }
+
+  function widgetSlug(): string {
+    return demoSlug ?? (brand ? slugify(brand.name) : 'client');
+  }
+
   async function copyEmbed() {
     if (!brand) return;
-    const slug = slugify(brand.name);
     const snippet = [
       `<!-- ProofLoop widget: ${brand.name} -->`,
-      `<div data-proofloop-widget="${slug}"></div>`,
-      `<script async src="https://proofloop.app/widget.js"></script>`,
+      `<div data-proofloop-widget="${widgetSlug()}"></div>`,
+      `<script async src="${window.location.origin}/widget.js"></script>`,
     ].join('\n');
     try {
       await navigator.clipboard.writeText(snippet);
@@ -312,11 +345,18 @@ export default function App() {
               <div className="panel-card">
                 <h3>Embed anywhere</h3>
                 <p>One snippet. Any site, any CMS, already styled in your client's brand.</p>
-                <pre className="embed-code">{`<div data-proofloop-widget="${slugify(brand.name)}"></div>
-<script async src="https://proofloop.app/widget.js"></script>`}</pre>
-                <button className="btn-ghost" onClick={copyEmbed}>
-                  {copied ? 'Copied ✓' : 'Copy embed code'}
-                </button>
+                <pre className="embed-code">{`<div data-proofloop-widget="${widgetSlug()}"></div>
+<script async src="${typeof window !== 'undefined' ? window.location.origin : 'https://proofloop.app'}/widget.js"></script>`}</pre>
+                <div className="embed-actions">
+                  <button className="btn-ghost" onClick={copyEmbed}>
+                    {copied ? 'Copied ✓' : 'Copy embed code'}
+                  </button>
+                  {demoSlug && (
+                    <a className="live-link" href={`/w/${demoSlug}`} target="_blank" rel="noreferrer">
+                      Preview live widget ↗
+                    </a>
+                  )}
+                </div>
               </div>
               <div className="panel-card">
                 <h3>Monthly Proof Report</h3>
@@ -548,6 +588,417 @@ function Widget({ brand, limit = 6 }: { brand: Brand; limit?: number }) {
         ))}
       </div>
       <div className="widget-more">+ 32 more reviews</div>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Founder console (/admin) — token-gated workspace management.
+// ---------------------------------------------------------------------------
+
+type AdminWorkspace = {
+  id: string;
+  slug: string;
+  name: string;
+  logo_url: string | null;
+  accent: string | null;
+  origin: string;
+  created_at: string;
+  review_count: number;
+  approved_count: number;
+};
+
+type AdminReview = {
+  id: string;
+  author: string;
+  role: string;
+  text: string;
+  rating: number;
+  when_label: string;
+  source: string;
+  approved: boolean;
+};
+
+async function adminApi(token: string, path: string, init?: RequestInit) {
+  const res = await fetch(path, {
+    ...init,
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+      ...(init?.headers ?? {}),
+    },
+  });
+  const data = await res.json().catch(() => ({}));
+  return { ok: res.ok as boolean, status: res.status, data };
+}
+
+function AdminApp() {
+  const [tokenInput, setTokenInput] = useState('');
+  const [token, setToken] = useState(() => sessionStorage.getItem('pl_admin_token') ?? '');
+  const [status, setStatus] = useState<'idle' | 'checking' | 'ok'>('idle');
+  const [authError, setAuthError] = useState('');
+  const [workspaces, setWorkspaces] = useState<AdminWorkspace[]>([]);
+  const [detail, setDetail] = useState<{ ws: AdminWorkspace; reviews: AdminReview[] } | null>(null);
+  const [newUrl, setNewUrl] = useState('');
+  const [busy, setBusy] = useState('');
+  const [note, setNote] = useState('');
+  const [error, setError] = useState('');
+  const [pasteText, setPasteText] = useState('');
+  const [importQuery, setImportQuery] = useState('');
+  const [editId, setEditId] = useState<string | null>(null);
+  const [editText, setEditText] = useState('');
+
+  async function refresh(t: string, openId?: string) {
+    const list = await adminApi(t, '/api/admin/workspaces');
+    if (!list.ok) {
+      setStatus('idle');
+      sessionStorage.removeItem('pl_admin_token');
+      setToken('');
+      setAuthError(
+        list.status === 401
+          ? 'Wrong token. Try again.'
+          : list.status === 503
+            ? 'The server has no ADMIN_TOKEN configured yet.'
+            : 'Could not load workspaces.',
+      );
+      return;
+    }
+    sessionStorage.setItem('pl_admin_token', t);
+    setToken(t);
+    setAuthError('');
+    setStatus('ok');
+    setWorkspaces(list.data.workspaces ?? []);
+    if (openId) await open(t, openId);
+    else setDetail(null);
+  }
+
+  useEffect(() => {
+    if (token) void refresh(token);
+    // Run once on mount; refresh is invoked explicitly afterwards.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  async function open(t: string, id: string) {
+    const res = await adminApi(t, `/api/admin/workspaces/${id}`);
+    if (res.ok) setDetail({ ws: res.data.workspace, reviews: res.data.reviews ?? [] });
+  }
+
+  async function act(label: string, fn: () => Promise<void>) {
+    setBusy(label);
+    setError('');
+    setNote('');
+    try {
+      await fn();
+    } finally {
+      setBusy('');
+    }
+  }
+
+  if (status !== 'ok') {
+    return (
+      <div className="admin">
+        <nav className="admin-nav">
+          <div className="nav-logo">
+            <span className="nav-mark" />
+            ProofLoop <span className="admin-tag">founder console</span>
+          </div>
+        </nav>
+        <div className="token-gate">
+          <h2>Founder console</h2>
+          <p>Enter the admin token (ADMIN_TOKEN on the server).</p>
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              void refresh(tokenInput.trim());
+            }}
+          >
+            <input
+              type="password"
+              value={tokenInput}
+              onChange={(e) => setTokenInput(e.target.value)}
+              placeholder="Admin token"
+              aria-label="Admin token"
+              required
+            />
+            <button className="btn-primary" type="submit" disabled={status === 'checking'}>
+              {status === 'checking' ? 'Checking…' : 'Unlock'}
+            </button>
+          </form>
+          {authError && <p className="admin-error">{authError}</p>}
+        </div>
+      </div>
+    );
+  }
+
+  const origin = window.location.origin;
+
+  return (
+    <div className="admin">
+      <nav className="admin-nav">
+        <div className="nav-logo">
+          <span className="nav-mark" />
+          ProofLoop <span className="admin-tag">founder console</span>
+        </div>
+        {detail ? (
+          <button className="text-link" onClick={() => setDetail(null)}>
+            ← All workspaces
+          </button>
+        ) : (
+          <a className="text-link" href="/">View landing page ↗</a>
+        )}
+      </nav>
+
+      {note && <div className="admin-note">{note}</div>}
+      {error && <div className="admin-error">{error}</div>}
+
+      {!detail ? (
+        <div className="admin-body">
+          <form
+            className="admin-create"
+            onSubmit={(e) => {
+              e.preventDefault();
+              act('create', async () => {
+                const res = await adminApi(token, '/api/admin/workspaces', {
+                  method: 'POST',
+                  body: JSON.stringify({ url: newUrl.trim() }),
+                });
+                if (!res.ok) {
+                  setError(res.data?.error ?? 'Could not create workspace.');
+                  return;
+                }
+                setNewUrl('');
+                setNote(`Workspace created: ${res.data.workspace.name}`);
+                await refresh(token, res.data.workspace.id);
+              });
+            }}
+          >
+            <input
+              type="text"
+              placeholder="Paste a client's website or Google link…"
+              value={newUrl}
+              onChange={(e) => setNewUrl(e.target.value)}
+              aria-label="Client URL"
+            />
+            <button className="btn-primary" disabled={busy === 'create'}>
+              {busy === 'create' ? 'Creating…' : 'New client workspace'}
+            </button>
+          </form>
+
+          <div className="ws-list">
+            {workspaces.map((w) => (
+              <button key={w.id} className="ws-row" onClick={() => void open(token, w.id)}>
+                <span className="ws-name">
+                  {w.name}
+                  {w.origin === 'demo' && <em className="ws-badge">demo</em>}
+                </span>
+                <span className="ws-meta">
+                  /w/{w.slug} · {w.approved_count}/{w.review_count} published
+                </span>
+              </button>
+            ))}
+            {!workspaces.length && <p className="admin-empty">No workspaces yet. Create one above.</p>}
+          </div>
+        </div>
+      ) : (
+        <div className="admin-body">
+          <header className="ws-head">
+            <div>
+              <h2>{detail.ws.name}</h2>
+              <p className="ws-meta">
+                Share link: {origin}/w/{detail.ws.slug} · {detail.ws.approved_count}/
+                {detail.reviews.length} reviews published
+              </p>
+            </div>
+            <div className="ws-head-actions">
+              <a className="btn-ghost" href={`/w/${detail.ws.slug}`} target="_blank" rel="noreferrer">
+                Open widget ↗
+              </a>
+              <button
+                className="btn-ghost"
+                onClick={() => {
+                  const snippet = `<div data-proofloop-widget="${detail.ws.slug}"></div>\n<script async src="${origin}/widget.js"></script>`;
+                  void navigator.clipboard
+                    .writeText(snippet)
+                    .catch(() => undefined)
+                    .finally(() => setNote('Embed code copied.'));
+                }}
+              >
+                Copy embed
+              </button>
+            </div>
+          </header>
+
+          <div className="admin-grid">
+            <section className="admin-card">
+              <h3>Import reviews</h3>
+              <div className="import-row">
+                <input
+                  type="text"
+                  placeholder={`Search Google for "${detail.ws.name}" (optional)`}
+                  value={importQuery}
+                  onChange={(e) => setImportQuery(e.target.value)}
+                />
+                <button
+                  className="btn-primary"
+                  disabled={Boolean(busy)}
+                  onClick={() =>
+                    act('google', async () => {
+                      const res = await adminApi(
+                        token,
+                        `/api/admin/workspaces/${detail.ws.id}/import/google`,
+                        { method: 'POST', body: JSON.stringify({ query: importQuery.trim() }) },
+                      );
+                      if (res.status === 503) {
+                        setError('Google import needs GOOGLE_PLACES_API_KEY on the server. Use manual paste for now.');
+                        return;
+                      }
+                      if (!res.ok) {
+                        setError(res.data?.error ?? 'Google import failed.');
+                        return;
+                      }
+                      setNote(`Imported ${res.data.imported} Google review(s) — approve them below.`);
+                      await open(token, detail.ws.id);
+                    })
+                  }
+                >
+                  {busy === 'google' ? 'Importing…' : 'Import from Google'}
+                </button>
+              </div>
+              <textarea
+                placeholder={'One review per block, blank line between:\n\nMaya Torres, Operations lead\n5\nCommunication was fast and results showed up in the first month.\n\nDaniel Okafor, Founder\nNo contest. Professional from first call to delivery.'}
+                value={pasteText}
+                onChange={(e) => setPasteText(e.target.value)}
+                rows={7}
+              />
+              <div className="import-row">
+                <button
+                  className="btn-ghost"
+                  disabled={Boolean(busy) || !pasteText.trim()}
+                  onClick={() =>
+                    act('manual', async () => {
+                      const res = await adminApi(
+                        token,
+                        `/api/admin/workspaces/${detail.ws.id}/import/manual`,
+                        { method: 'POST', body: JSON.stringify({ text: pasteText }) },
+                      );
+                      if (!res.ok) {
+                        setError(res.data?.error ?? 'Manual import failed.');
+                        return;
+                      }
+                      setPasteText('');
+                      setNote(`Imported ${res.data.imported} pasted review(s) — approve them below.`);
+                      await open(token, detail.ws.id);
+                    })
+                  }
+                >
+                  {busy === 'manual' ? 'Importing…' : 'Import pasted reviews'}
+                </button>
+                <button
+                  className="btn-ghost"
+                  disabled={Boolean(busy)}
+                  onClick={() =>
+                    act('approve', async () => {
+                      const res = await adminApi(
+                        token,
+                        `/api/admin/workspaces/${detail.ws.id}/approve-all`,
+                        { method: 'POST' },
+                      );
+                      if (!res.ok) {
+                        setError('Could not approve all.');
+                        return;
+                      }
+                      setNote(`Approved ${res.data.approved} review(s).`);
+                      await open(token, detail.ws.id);
+                    })
+                  }
+                >
+                  {busy === 'approve' ? 'Approving…' : 'Approve all'}
+                </button>
+              </div>
+            </section>
+
+            <section className="admin-card">
+              <h3>Reviews ({detail.reviews.length})</h3>
+              <div className="review-list">
+                {detail.reviews.map((r) => (
+                  <div key={r.id} className={`review-row ${r.approved ? 'approved' : 'pending'}`}>
+                    <div className="review-row-head">
+                      <label className="review-approve">
+                        <input
+                          type="checkbox"
+                          checked={r.approved}
+                          onChange={() =>
+                            act('toggle', async () => {
+                              await adminApi(token, `/api/admin/reviews/${r.id}`, {
+                                method: 'PATCH',
+                                body: JSON.stringify({ approved: !r.approved }),
+                              });
+                              await open(token, detail.ws.id);
+                            })
+                          }
+                        />
+                        {r.approved ? 'Published' : 'Pending'}
+                      </label>
+                      <span className="review-src">{r.source}</span>
+                      <span className="review-stars">{'★'.repeat(r.rating)}</span>
+                      <button
+                        className="text-link"
+                        onClick={() =>
+                          act('edit', async () => {
+                            if (editId === r.id) {
+                              if (editText.trim() && editText.trim() !== r.text) {
+                                await adminApi(token, `/api/admin/reviews/${r.id}`, {
+                                  method: 'PATCH',
+                                  body: JSON.stringify({ text: editText }),
+                                });
+                              }
+                              setEditId(null);
+                              await open(token, detail.ws.id);
+                            } else {
+                              setEditId(r.id);
+                              setEditText(r.text);
+                            }
+                          })
+                        }
+                      >
+                        {editId === r.id ? 'Save' : 'Edit'}
+                      </button>
+                      <button
+                        className="text-link danger"
+                        onClick={() =>
+                          act('delete', async () => {
+                            await adminApi(token, `/api/admin/reviews/${r.id}`, { method: 'DELETE' });
+                            await open(token, detail.ws.id);
+                          })
+                        }
+                      >
+                        Delete
+                      </button>
+                    </div>
+                    {editId === r.id ? (
+                      <textarea
+                        value={editText}
+                        onChange={(e) => setEditText(e.target.value)}
+                        rows={3}
+                      />
+                    ) : (
+                      <blockquote>&ldquo;{r.text}&rdquo;</blockquote>
+                    )}
+                    <div className="review-byline">
+                      {r.author || 'Unknown'}
+                      {r.role ? `, ${r.role}` : ''}
+                      {r.when_label ? ` · ${r.when_label}` : ''}
+                    </div>
+                  </div>
+                ))}
+                {!detail.reviews.length && (
+                  <p className="admin-empty">No reviews yet. Import from Google or paste some.</p>
+                )}
+              </div>
+            </section>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
