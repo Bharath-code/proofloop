@@ -1,45 +1,91 @@
-# Cold Outreach List — 20 Agencies for ProofLoop
-Compiled 2026-08-30. All agencies are real, found via live search (directories, agency lists, reputation-management roundups). Emails intentionally not guessed — find via contact page, LinkedIn, or Hunter.io (standard practice, keeps deliverability high).
+# Cold Outreach List — Sub-Niche-Tracked (20 Agencies for ProofLoop)
 
-## Tier A — Review/reputation agencies (hottest: they already manage client reviews for a living)
-| # | Agency | Website | Location | Fit angle |
-|---|---|---|---|---|
-| 1 | Review Farmer | reviewfarmer.com | Georgia, USA | Google-review generation agency; needs client-facing proof widgets + reporting |
-| 2 | Rewired Agency (Reputation & Reviews) | reputation.therewiredagency.com | USA | Runs a review-generation program; pitch: showcase layer for the reviews they already collect |
-| 3 | Vizible Agency | vizibleagency.com | USA (Milwaukee area) | Reputation mgmt for local business; ML sentiment angle — pitch proof dashboards per client |
-| 4 | Thrive Agency (white-label ORM) | thriveagency.com | Dallas, TX | Has a white-label agency program; pitch: cheaper white-label testimonial widget stack |
-| 5 | Reputation Resolutions | reputationresolutions.com | USA | 5,000+ clients since 2013; pitch: client-facing "wall of proof" add-on |
+Restructured 2026-09-02 per the ICP-validation system: "marketing agencies" is a
+category, not an ICP. Every send carries a named **sub-niche** and a **pain angle**
+in that niche's own language, so replies/no-replies accumulate into market signal —
+not just pipeline.
 
-## Tier B — Small digital/social marketing agencies (manage 5–30 SMB clients)
-| # | Agency | Website | Location | Fit angle |
-|---|---|---|---|---|
-| 6 | Nativz | nativz.io | Dallas–Fort Worth, TX | Multi-vertical SMB clients; pitch: per-client proof reports billable into retainers |
-| 7 | Coolnerds Marketing | coolnerdsmarketing.com | New York, NY | CPG + small-biz social; pitch: turn UGC/reviews into client proof |
-| 8 | Mod Girl Marketing | modgirlmarketing.com | USA (boutique) | Consulting model; pitch: white-label proof for client accounts |
-| 9 | Colibri Digital Marketing | colibridigitalmarketing.com | San Francisco, CA | Bilingual boutique; pitch: proof widgets for restaurant/retail clients |
-| 10 | LYFE Marketing | lyfemarketing.com | Atlanta, GA | SMB social specialist (high client count); pitch: proof per client + review collection |
-| 11 | Fresh Content Society | freshcontentsociety.com | Chicago, IL | Content-first organic social; pitch: testimonial content pipeline |
-| 12 | Sociallyin | sociallyin.com | USA | Social media agency, many SMB accounts |
-| 13 | Sculpt | wearesculpt.com | Iowa, USA | B2B/LinkedIn; pitch: client-proof walls for B2B sites |
-| 14 | Jive PR + Digital | jiveprdigital.com | USA | PR + digital for SMBs; pitch: PR mentions + reviews → one proof hub per client |
-| 15 | Third Marble Marketing | thirdmarblemarketing.com | Richmond, VA | Google Ads for small biz; pitch: proof widgets lift ad landing-page conversion |
+Compiled 2026-08-30 from live search (directories, agency lists, reputation roundups).
+Emails intentionally not guessed — find via contact page, LinkedIn, or Hunter.io.
 
-## Tier C — Web design agencies (they embed testimonial sections on client sites already)
-| # | Agency | Website | Location | Fit angle |
-|---|---|---|---|---|
-| 16 | Funnel Boost Media | funnelboostmedia.net | San Antonio, TX | WordPress sites for law/home-services; pitch: replace hand-coded testimonial sections |
-| 17 | Visualwebz | visualwebz.com | Seattle, WA | Small-biz web design at scale; pitch: embeddable widgets across dozens of client sites |
-| 18 | Hunter Web Group | hunterwebgroup.com | Omaha, NE | Omaha small-business sites; pitch: collection links + widgets as retainer add-on |
-| 19 | Atwood Sites | atwoodsites.com | Arizona, USA | Small web shop; pitch: save hours hand-building testimonial pages |
-| 20 | Active WebDezign | webdezign.co.uk | London, UK | 20-yr UK agency, B2B/e-com clients; pitch: proof widgets + G2/Google import |
+---
 
-## Outreach email template (day-1 version, personalized per agency)
+## Sub-niche definitions (vocabulary for the emails)
+
+| Sub-niche | Who they are | They say | We say | Pain angle to lead with | Primary offer |
+|---|---|---|---|---|---|
+| **S1 — Review-management shops** | Generate/manage Google reviews for clients all day | "review velocity", "sentiment", "ratings lift", "1-star suppression" | conversion lift | They *collect* reviews but can't *showcase* them — no client-facing proof layer to bill for | A: free proof audit |
+| **S2 — Social-first SMB shops** | Manage social/content for 5–30 SMB accounts | "UGC", "client approval", "content calendar", "sourcing posts" | testimonial ops | Testimonials live in screenshots and DMs; turning them into site-ready proof is manual busywork | A: free proof audit |
+| **S3 — Paid-ads-for-SMB shops** | Run Google/Meta ads for small businesses | "landing page conversion", "CVR", "ad-to-page match" | social proof section | Landing pages leak conversions because trust is hand-pasted or missing; widgets lift CVR | B: widget pilot |
+| **S4 — Web design shops** | Build/maintain client sites; every site needs a testimonial section | "testimonial section", "hand-coded", "client requests", "site edits" | embeddable proof widget | They hand-build the same testimonial block 20× a year in client sites; hours that bill at zero | B: widget pilot |
+| **S5 — PR/boutique consultancies** | PR mentions, B2B LinkedIn, consulting retainers | "media mentions", "third-party validation", "credibility" | proof hub | Proof is scattered (press, reviews, LinkedIn recs) with no single client-facing hub | A: free proof audit |
+
+Offer key:
+- **A — free proof audit** ("Get a free proof audit" — we manually audit one client's scattered proof and hand back a branded sample widget + report)
+- **B — widget pilot** (2 free client workspaces for a month, they shape the roadmap)
+
+---
+
+## Prospect roster (tagged by sub-niche)
+
+Columns: `# | Agency | Website | Location | Sub-niche | Pain angle used | Offer | Contact name | Email src | D1 sent | D7 sent | Reply | Call | Trial | Converted`
+
+### S1 — Review-management shops (lead with "showcase layer for the reviews you already collect")
+
+| # | Agency | Website | Location | Angle | Offer | Contact | Email src | D1 | D7 | Reply | Call | Trial | Won |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| 1 | Review Farmer | reviewfarmer.com | Georgia, USA | review velocity → showcase gap | A | | | | | | | | |
+| 2 | Rewired Agency (Reputation & Reviews) | reputation.therewiredagency.com | USA | review program → display layer | A | | | | | | | | |
+| 3 | Vizible Agency | vizibleagency.com | Milwaukee area, USA | sentiment dashboards → client proof views | A | | | | | | | | |
+| 4 | Thrive Agency (white-label ORM) | thriveagency.com | Dallas, TX | white-label → cheaper proof stack | B | | | | | | | | |
+| 5 | Reputation Resolutions | reputationresolutions.com | USA | 5k clients → wall-of-proof add-on | A | | | | | | | | |
+
+### S2 — Social-first SMB shops (lead with "UGC/reviews → site-ready proof, zero design hours")
+
+| # | Agency | Website | Location | Angle | Offer | Contact | Email src | D1 | D7 | Reply | Call | Trial | Won |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| 6 | Nativz | nativz.io | DFW, TX | per-client proof reports billable | A | | | | | | | | |
+| 7 | Coolnerds Marketing | coolnerdsmarketing.com | New York, NY | UGC/reviews → client proof | A | | | | | | | | |
+| 9 | Mod Girl Marketing | modgirlmarketing.com | USA (boutique) | white-label proof per account | A | | | | | | | | |
+| 10 | LYFE Marketing | lyfemarketing.com | Atlanta, GA | proof per client + review collection | A | | | | | | | | |
+| 11 | Fresh Content Society | freshcontentsociety.com | Chicago, IL | testimonial content pipeline | A | | | | | | | | |
+| 12 | Sociallyin | sociallyin.com | USA | many SMB accounts, proof per client | A | | | | | | | | |
+
+### S3 — Paid-ads-for-SMB shops (lead with "proof widgets lift landing-page CVR")
+
+| # | Agency | Website | Location | Angle | Offer | Contact | Email src | D1 | D7 | Reply | Call | Trial | Won |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| 15 | Third Marble Marketing | thirdmarblemarketing.com | Richmond, VA | ad LP conversion lift | B | | | | | | | | |
+
+### S4 — Web design shops (lead with "stop hand-coding the same testimonial block")
+
+| # | Agency | Website | Location | Angle | Offer | Contact | Email src | D1 | D7 | Reply | Call | Trial | Won |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| 16 | Funnel Boost Media | funnelboostmedia.net | San Antonio, TX | replace hand-coded sections | B | | | | | | | | |
+| 17 | Visualwebz | visualwebz.com | Seattle, WA | embeddable widgets at scale | B | | | | | | | | |
+| 18 | Hunter Web Group | hunterwebgroup.com | Omaha, NE | collection links + widgets as add-on | B | | | | | | | | |
+| 19 | Atwood Sites | atwoodsites.com | Arizona, USA | save hours on testimonial pages | B | | | | | | | | |
+| 20 | Active WebDezign | webdezign.co.uk | London, UK | proof widgets + G2/Google import | B | | | | | | | | |
+
+### S5 — PR / boutique consultancies (lead with "one proof hub for mentions + reviews + recs")
+
+| # | Agency | Website | Location | Angle | Offer | Contact | Email src | D1 | D7 | Reply | Call | Trial | Won |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| 8 | Colibri Digital Marketing | colibridigitalmarketing.com | San Francisco, CA | restaurant/retail proof widgets | A | | | | | | | | |
+| 13 | Sculpt | wearesculpt.com | Iowa, USA | B2B client-proof walls | A | | | | | | | | |
+| 14 | Jive PR + Digital | jiveprdigital.com | USA | PR mentions + reviews → one hub | A | | | | | | | | |
+
+---
+
+## Offer variants (subject + first-line by sub-niche)
+
+**Base template (S1/S2/S5):**
 
 **Subject:** Client testimonials — taking this off your team's plate
 
 > Hi {First name},
 >
-> {Agency} builds sites/campaigns for {N-ish of your client types, e.g., home-service brands} — so your team probably hand-builds testimonial sections or copy-pastes Google reviews into client reports.
+> {Agency} builds sites/campaigns for {N-ish of your client types} — so your team probably hand-builds testimonial sections or copy-pastes Google reviews into client reports.
 >
 > I'm building a tool made for agencies: one workspace per client, collection links that pull real reviews/testimonials, white-label widgets for their sites, and a monthly proof report you can bill into the retainer.
 >
@@ -49,17 +95,32 @@ Compiled 2026-08-30. All agencies are real, found via live search (directories, 
 >
 > {Your name}
 
-**LinkedIn alternative (connection request note, 300-char limit):**
+**S1 swap-in (use their language):**
+- Subject: "You're collecting the reviews — {Agency} should be *showing* them"
+- First line: "{Agency} generates review velocity for {client types} — but every review you earn is invisible outside the Google listing. We turn the reviews you already collect into branded client-facing proof your clients pay you to present."
+
+**S4 swap-in:**
+- Subject: "The same testimonial section, hand-coded 20×"
+- First line: "Every client site you ship needs a testimonial block, and your team rebuilds it by hand every time. We replace that with a white-label embed that pulls real reviews per client — one snippet, works everywhere."
+
+**LinkedIn alternative (300-char):**
 > Hi {Name} — I'm building testimonial-management software specifically for agencies (per-client workspaces, white-label widgets, billable proof reports). Would love 15 min to show you 2 free client workspaces. No pitch deck, just a working product.
 
 ## Cadence (per prospect)
-- Day 1: email → Day 3: LinkedIn connect → Day 7: follow-up email ("any client you'd want to pilot this on?") → Day 14: close-the-loop email. 20 agencies/week, expect 3–8 replies, 1–3 calls.
+- Day 1: email → Day 3: LinkedIn connect → Day 7: follow-up ("any client you'd want to pilot this on?") → Day 14: close-the-loop email.
+- Max 10 highly personalized emails/week. 20-agency pool ≈ 2 weeks per full cycle.
 
-## Important competitive intel found during this research
+## Signal rules (from the ICP-validation system)
+
+1. **Every send gets tagged** before it goes out: sub-niche + pain angle + offer. No untagged sends.
+2. **Weekly scorecard (Fridays):** named repliers, sub-niche, pain angle, offer. The point is *which sub-niches reply*, not just how many.
+3. **Kill rule:** a sub-niche is only "dead" after **both** offers (A and B) have failed across it (~5 sends each). One failed campaign = wrong message. Two failed offers = wrong audience.
+4. **Iterate rule:** if a sub-niche shows zero interested replies at ~5 sends on one offer, swap the pain angle (not the sub-niche) before offer #2.
+5. **Feed the winners back:** winning phrases from replies go into the landing page hero, widget page copy, and the next email variant.
+
+## Competitive intel found during research
 **EmbedMyReviews** (embedmyreviews.com) — white-label review-embed platform, $99/mo flat, G2 High Performer, agencies in 40+ countries, Stripe-resell model. This VALIDATES the category but narrows the wedge:
 - EMR = embed-only, reputation-first, agency resells as their own brand.
 - ProofLoop's differentiation must be the **agency workflow layer**: multi-client workspaces, client-facing collection links, approval queues, and monthly proof REPORTS (EMR's reports are review-metric reports, not testimonial-ops).
 - Position ProofLoop as "testimonial operations for agencies," not "another review widget."
-
-## Tracking suggestion
-Columns: Agency | Tier | Contact name | Email source | Day-1 sent | Reply | Call | Trial offered | Converted.
+- Note: EMR's positioning targets S4/S1 hardest — expect the widget-only objection from S4; answer with workspaces + reports, not the embed.
