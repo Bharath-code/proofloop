@@ -47,11 +47,13 @@
   .who strong { display: block; font-size: 12px; }
   .who em { font-style: normal; font-size: 11px; color: #8b9097; }
   .empty-msg { padding: 24px 4px; color: #6b6f76; font-size: 13.5px; }
-  .error-msg { padding: 32px 8px; text-align: center; color: #6b6f76; font-size: 13.5px; }
+  .load-msg, .error-msg { padding: 32px 8px; text-align: center; color: #6b6f76; font-size: 13.5px; }
+  .load-msg { animation: pl-pulse 1.2s ease-in-out infinite; }
+  @keyframes pl-pulse { 0%, 100% { opacity: .45; } 50% { opacity: 1; } }
 </style>
 </head>
 <body>
-<div id="root"><div class="error-msg">Loading…</div></div>
+<div id="root"><div class="load-msg">Loading…</div></div>
 <script>
 (function () {
   var slugMatch = location.pathname.match(/\/w\/([^/?#]+)/);

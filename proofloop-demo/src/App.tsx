@@ -90,6 +90,7 @@ function Landing() {
   const [auditEmail, setAuditEmail] = useState('');
   const [auditSubmitted, setAuditSubmitted] = useState(false);
   const [demoSlug, setDemoSlug] = useState<string | null>(null);
+  const [demoStatus, setDemoStatus] = useState<'idle' | 'pending' | 'ready' | 'failed'>('idle');
   const resultRef = useRef<HTMLDivElement>(null);
   const busyRef = useRef(false);
 
@@ -140,6 +141,7 @@ function Landing() {
       });
       setElapsed(((performance.now() - t0) / 1000).toFixed(1) + 's');
       setFlow('done');
+      setDemoStatus('pending');
       void createDemoWorkspace({
         name: resolvedName,
         accent,
@@ -174,12 +176,32 @@ function Landing() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ...payload, reviews: SAMPLE_REVIEWS }),
       });
-      if (!res.ok) return;
+      if (!res.ok) {
+        setDemoStatus('failed');
+        return;
+      }
       const data = await res.json();
-      if (data?.slug) setDemoSlug(data.slug);
+      if (data?.slug) {
+        setDemoSlug(data.slug);
+        setDemoStatus('ready');
+      } else {
+        setDemoStatus('failed');
+      }
     } catch {
       /* the demo result still renders without a live workspace */
+      setDemoStatus('failed');
     }
+  }
+
+  function resetDemo() {
+    setFlow('idle');
+    setBrand(null);
+    setDemoSlug(null);
+    setDemoStatus('idle');
+    setInput('');
+    setError('');
+    setCopied(false);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
   function widgetSlug(): string {
@@ -331,6 +353,9 @@ function Landing() {
                 {brand.detected ? 'Brand detected from live site' : 'Demo branding applied'}
               </span>
               <span className="result-time">Built in {elapsed}</span>
+              <button className="text-link" onClick={resetDemo}>
+                Try another client
+              </button>
             </div>
 
             <div className="widget-frame">
@@ -347,10 +372,25 @@ function Landing() {
                 <p>One snippet. Any site, any CMS, already styled in your client's brand.</p>
                 <pre className="embed-code">{`<div data-proofloop-widget="${widgetSlug()}"></div>
 <script async src="${typeof window !== 'undefined' ? window.location.origin : 'https://proofloop.app'}/widget.js"></script>`}</pre>
-                <div className="embed-actions">
-                  <button className="btn-ghost" onClick={copyEmbed}>
-                    {copied ? 'Copied ✓' : 'Copy embed code'}
+                <div className="embed-actions" aria-live="polite">
+                  <button
+                    className="btn-ghost"
+                    onClick={copyEmbed}
+                    disabled={demoStatus === 'pending' || demoStatus === 'failed'}
+                  >
+                    {demoStatus === 'pending'
+                      ? 'Preparing live workspace…'
+                      : demoStatus === 'failed'
+                        ? 'Live workspace unavailable'
+                        : copied
+                          ? 'Copied ✓'
+                          : 'Copy embed code'}
                   </button>
+                  {demoStatus === 'failed' && (
+                    <span className="embed-warning">
+                      Couldn't save the live preview — retry from the top to get a working embed.
+                    </span>
+                  )}
                   {demoSlug && (
                     <a className="live-link" href={`/w/${demoSlug}`} target="_blank" rel="noreferrer">
                       Preview live widget ↗
@@ -537,7 +577,9 @@ function Landing() {
         </p>
       </footer>
 
-      {copied && <div className="toast">Embed code copied</div>}
+      <div aria-live="polite">
+        {copied && <div className="toast">Embed code copied</div>}
+      </div>
     </main>
   );
 }
@@ -678,6 +720,15 @@ function AdminApp() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  useEffect(() => {
+    if (!note && !error) return;
+    const t = setTimeout(() => {
+      setNote('');
+      setError('');
+    }, 4500);
+    return () => clearTimeout(t);
+  }, [note, error]);
+
   async function open(t: string, id: string) {
     const res = await adminApi(t, `/api/admin/workspaces/${id}`);
     if (res.ok) setDetail({ ws: res.data.workspace, reviews: res.data.reviews ?? [] });
@@ -748,8 +799,16 @@ function AdminApp() {
         )}
       </nav>
 
-      {note && <div className="admin-note">{note}</div>}
-      {error && <div className="admin-error">{error}</div>}
+      {note && (
+        <div className="admin-note" role="status">
+          {note}
+        </div>
+      )}
+      {error && (
+        <div className="admin-error" role="alert">
+          {error}
+        </div>
+      )}
 
       {!detail ? (
         <div className="admin-body">
